@@ -4,18 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>글로벌 게임 산업 카드 뉴스 피드 (사전 요약)</title>
+    <meta name="description" content="AI 기반 글로벌 게임 산업 뉴스 분석 서비스">
+    <meta name="keywords" content="게임뉴스, AI분석, 게임산업, 뉴스요약">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #1a202c; /* 다크 모드 배경 */
+            background-color: #1a202c;
             color: #e2e8f0;
         }
-        /* 피드 카드 스타일 */
         .news-card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-            background-color: #2d3748; /* 카드 배경 */
+            background-color: #2d3748;
             cursor: pointer;
         }
         .news-card:hover {
@@ -24,7 +25,6 @@
         }
         .news-title {
             font-weight: 900;
-            /* 썸네일이 제거되어 다시 제목 줄 수를 줄임 */
             display: -webkit-box;
             -webkit-line-clamp: 2; 
             -webkit-box-orient: vertical;
@@ -32,7 +32,6 @@
             text-overflow: ellipsis;
         }
         .news-summary {
-            /* 썸네일이 제거되어 요약 줄 수를 늘림 */
             display: -webkit-box;
             -webkit-line-clamp: 3; 
             -webkit-box-orient: vertical;
@@ -41,10 +40,13 @@
             line-height: 1.6;
         }
         .filter-btn.active {
-            background-color: #7B68EE; /* 보라색 활성화 */
+            background-color: #7B68EE;
             color: #FFFFFF;
             font-weight: 700;
             box-shadow: 0 4px 10px rgba(123, 104, 238, 0.5);
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
         }
     </style>
 </head>
@@ -58,48 +60,33 @@
             <p id="header-subtitle" class="text-gray-400 text-md md:text-lg">신뢰할 수 있는 매체에서 수집한 최소 15개, 최대 30개의 기사입니다.</p>
         </header>
 
-        <section id="api-key-section" class="bg-gray-800 p-5 rounded-xl shadow-xl mb-10 border">
-            <h2 class="text-xl font-bold text-red-400 mb-3">⚠️ Gemini API Key 입력 (최초 1회)</h2>
-            <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3">
-                <input type="text" id="api-key-input" placeholder="발급받은 Gemini API 키를 여기에 붙여넣으세요." 
-                       class="flex-grow p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400"
-                       autocomplete="off">
-                <button id="save-key-btn" 
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-colors">
-                    키 저장 및 뉴스 로드
-                </button>
+        <section id="api-key-section" class="bg-gray-800 p-5 rounded-xl shadow-xl mb-10 border hidden">
+            <h2 class="text-xl font-bold text-red-400 mb-3">⚠️ API 키 설정 오류</h2>
+            <div class="text-center">
+                <p class="text-gray-400 mb-4">Netlify 환경변수에 GEMINI_API_KEY가 설정되지 않았습니다.</p>
+                <p class="text-sm text-gray-500">관리자에게 문의하거나 Netlify 대시보드에서 환경변수를 확인해주세요.</p>
             </div>
-            <p id="key-status" class="mt-3 text-sm font-medium text-gray-400"></p>
         </section>
-        
-        <div id="refresh-container" class="mt-4 mb-8 text-center hidden">
-            <button id="refresh-news-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-colors flex items-center justify-center mx-auto">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.96 8.96 0 0120 12a9 9 0 01-9 9m-1-10h.01M4 12a9 9 0 019-9 8.96 8.96 0 017.356 3.418M4 12v5h.582"></path></svg>
-                새 뉴스 스크랩 시작 (강제 새로 고침)
-            </button>
-            <p id="cache-info" class="text-sm text-gray-500 mt-2 font-medium"></p>
-        </div>
-
 
         <main id="feed-view">
             <section id="filters" class="flex justify-center space-x-2 md:space-x-4 mb-10 overflow-x-auto pb-3 border-b border-gray-700">
-                <button class="filter-btn active text-sm md:text-base bg-gray-700 text-gray-300 py-2 px-4 md:px-6 rounded-full hover:bg-gray-600" data-filter="all">
+                <button class="filter-btn active text-sm md:text-base bg-gray-700 text-gray-300 py-2 px-4 md:px-6 rounded-full hover:bg-gray-600" data-filter="all" aria-label="전체 뉴스 보기">
                     전체 동향
                 </button>
-                <button class="filter-btn text-sm md:text-base bg-gray-700 text-gray-300 py-2 px-4 md:px-6 rounded-full hover:bg-gray-600" data-filter="domestic">
+                <button class="filter-btn text-sm md:text-base bg-gray-700 text-gray-300 py-2 px-4 md:px-6 rounded-full hover:bg-gray-600" data-filter="domestic" aria-label="국내 뉴스 보기">
                     국내 소식 🇰🇷
                 </button>
-                <button class="filter-btn text-sm md:text-base bg-gray-700 text-gray-300 py-2 px-4 md:px-6 rounded-full hover:bg-gray-600" data-filter="overseas">
+                <button class="filter-btn text-sm md:text-base bg-gray-700 text-gray-300 py-2 px-4 md:px-6 rounded-full hover:bg-gray-600" data-filter="overseas" aria-label="해외 뉴스 보기">
                     해외 소식 🌎
                 </button>
             </section>
 
             <section id="news-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 min-h-[400px]">
-                </section>
+            </section>
         </main>
 
         <div id="detail-view" class="hidden">
-            <button onclick="showFeedPage()" class="flex items-center text-indigo-400 hover:text-white mb-6 transition-colors">
+            <button onclick="showFeedPage()" class="flex items-center text-indigo-400 hover:text-white mb-6 transition-colors" aria-label="목록으로 돌아가기">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                 목록으로 돌아가기
             </button>
@@ -112,7 +99,8 @@
                     </div>
                     <div class="mt-4 md:mt-0 flex space-x-3">
                         <a id="detail-source-link" target="_blank" rel="noopener noreferrer" 
-                           class="flex items-center text-sm font-medium text-gray-300 transition-colors bg-gray-600 px-4 py-2 rounded-full hover:bg-gray-700 shadow-lg">
+                           class="flex items-center text-sm font-medium text-gray-300 transition-colors bg-gray-600 px-4 py-2 rounded-full hover:bg-gray-700 shadow-lg"
+                           aria-label="원본 기사 보기">
                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                             원본 기사 보기
                         </a>
@@ -122,7 +110,7 @@
                 <h2 id="detail-title" class="text-3xl md:text-4xl font-extrabold text-white mb-6 leading-tight"></h2>
                 
                 <div id="detail-content" class="min-h-[200px] flex flex-col justify-center">
-                    </div>
+                </div>
             </article>
         </div>
 
@@ -134,10 +122,10 @@
     </div>
 
     <script>
-        // 전역 변수 설정 및 캐시 키
-        const API_KEY_STORAGE_KEY = 'geminiApiKey';
-        const NEWS_FEED_STORAGE_KEY = 'geminiNewsFeed'; // 뉴스 리스트를 저장할 새로운 키
-        let apiKey = localStorage.getItem(API_KEY_STORAGE_KEY) || "";
+        // 전역 변수 설정
+        const NEWS_FEED_STORAGE_KEY = 'geminiNewsFeed';
+        const CACHE_TIME_KEY = 'newsCacheTime';
+        let apiKeyAvailable = false;
 
         // 상태 관리
         let currentNewsItem = null; 
@@ -149,58 +137,73 @@
         const toastContainer = document.getElementById('toast-container');
         const detailView = document.getElementById('detail-view');
         const feedView = document.getElementById('feed-view');
-        const apiKeyInput = document.getElementById('api-key-input');
-        const saveKeyBtn = document.getElementById('save-key-btn');
-        const keyStatus = document.getElementById('key-status');
         const apiKeySection = document.getElementById('api-key-section');
-        const refreshContainer = document.getElementById('refresh-container');
-        const cacheInfo = document.getElementById('cache-info');
-        const refreshNewsBtn = document.getElementById('refresh-news-btn');
         
+        // --- Netlify Functions API 호출 함수 ---
+        async function callGeminiAPI(payload) {
+            try {
+                const response = await fetch('/api/gemini-api', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ payload })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'API 호출 실패');
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API 호출 오류:', error);
+                throw error;
+            }
+        }
+
+        // --- API 키 상태 확인 ---
+        async function checkApiKeyStatus() {
+            try {
+                const response = await fetch('/api/config-status');
+                const data = await response.json();
+                
+                if (data.hasApiKey) {
+                    apiKeyAvailable = true;
+                    apiKeySection.classList.add('hidden');
+                    console.log('✅ API 키가 Netlify 환경변수에서 로드되었습니다:', data.maskedKey);
+                } else {
+                    apiKeyAvailable = false;
+                    apiKeySection.classList.remove('hidden');
+                    console.error('❌ API 키를 찾을 수 없습니다.');
+                }
+                
+                return data.hasApiKey;
+            } catch (error) {
+                console.error('API 키 상태 확인 실패:', error);
+                apiKeyAvailable = false;
+                apiKeySection.classList.remove('hidden');
+                return false;
+            }
+        }
+
         // --- 헬퍼 함수: Exponential Backoff 처리된 Fetch 함수 ---
-        async function fetchWithRetry(apiUrl, payload, maxRetries = 3) {
+        async function fetchWithRetry(payload, maxRetries = 3) {
             for (let i = 0; i < maxRetries; i++) {
                 try {
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        const errorBody = await response.json().catch(() => ({}));
-                        if (response.status === 401) {
-                            throw new Error("API 인증 오류: API 키가 없거나 유효하지 않습니다.");
-                        }
-                        const detailMessage = errorBody.error?.message || "자세한 오류 메시지를 찾을 수 없습니다.";
-                        
-                        if (i === maxRetries - 1) throw new Error(`API 호출 실패 (${response.status} ${response.statusText}): ${detailMessage}`);
-                        
-                        // API 호출 실패(429 등) 시 지수 백오프 및 재시도
-                        const delay = Math.pow(2, i) * 1000 + Math.random() * 500;
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                        continue;
-                    }
-
-                    const result = await response.json();
+                    const result = await callGeminiAPI(payload);
                     return result;
-
                 } catch (error) {
                     if (i === maxRetries - 1) throw error;
-                    // 네트워크 오류 등 재시도
+                    
                     const delay = Math.pow(2, i) * 1000 + Math.random() * 500;
                     await new Promise(resolve => setTimeout(resolve, delay));
                 }
             }
         }
 
-        // -------------------- 동적 날짜 계산 및 표시 함수 (new Date() 사용) --------------------
-        
+        // -------------------- 동적 날짜 계산 및 표시 함수 --------------------
         function calculateTargetDateInfo() {
             const today = new Date();
-            // 뉴스 검색 대상 날짜: 어제 날짜를 기준으로 합니다.
             const newsDay = new Date(today);
-            // setDate()는 자동으로 월/년도를 조정합니다.
             newsDay.setDate(today.getDate() - 1); 
 
             const year = newsDay.getFullYear();
@@ -217,28 +220,22 @@
         
         // -------------------- Gemini API 호출 함수 (뉴스 헤드라인 자동 스크랩) --------------------
         async function fetchNewsHeadlinesForDate(newsDate) {
-            if (!apiKey) throw new Error("API 인증 오류: API 키가 설정되지 않았습니다. 키를 입력해 주세요.");
+            if (!apiKeyAvailable) throw new Error("API 인증 오류: Netlify 환경변수에 GEMINI_API_KEY가 설정되지 않았습니다.");
 
-            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             const MINIMUM_ARTICLES = 8;
 
-            // --- 데이터 파싱 시 레이블 제거를 위한 헬퍼 함수 ---
             const cleanPart = (text) => {
                 if (!text) return '';
-                // 'TITLE:', 'REGION:', 'CATEGORY:', 'SUMMARY:', 'LINK:' 등의 접두사를 대소문자 구분 없이 제거
                 const prefixes = [/^TITLE:/i, /^REGION:/i, /^CATEGORY:/i, /^SUMMARY:/i, /^LINK:/i];
                 let cleaned = text.trim();
                 for (const prefix of prefixes) {
                     if (prefix.test(cleaned)) {
-                        // 접두사를 제거하고 다시 trim
                         cleaned = cleaned.replace(prefix, '').trim(); 
                     }
                 }
                 return cleaned;
             };
-            // --------------------------------------------------
 
-            // *** 시스템 프롬프트 강화: 불필요한 서론/결론/안내문 절대 금지 ***
             const systemPrompt = `
                 당신은 한국의 전문 게임 산업 분석가입니다. Google Search를 사용하여 지정된 날짜(${newsDate})의 국내외 게임 산업 뉴스 최소 15개, 최대 30개를 찾아야 합니다. 
                 신뢰할 수 있는 매체 및 웹진 기사만 포함하고, 응답은 다음 형식으로만 제공해야 합니다. 
@@ -256,7 +253,7 @@
                 systemInstruction: { parts: [{ text: systemPrompt }] },
             };
 
-            const result = await fetchWithRetry(API_URL, payload);
+            const result = await fetchWithRetry(payload);
             const candidate = result.candidates?.[0];
 
             if (candidate && candidate.content?.parts?.[0]?.text) {
@@ -267,7 +264,6 @@
                     .map(articleText => {
                         const parts = articleText.trim().split('|||');
                         if (parts.length === 5) {
-                            // 레이블 제거 함수 적용
                             const cleanedTitle = cleanPart(parts[0]);
                             const cleanedRegion = cleanPart(parts[1]);
                             const cleanedCategory = cleanPart(parts[2]);
@@ -282,10 +278,9 @@
                                 category: cleanedCategory,
                                 summary: cleanedSummary,
                                 link: cleanedLink.startsWith('http') ? cleanedLink : `#`,
-                                // 상세 요약 데이터를 위한 필드 추가
                                 detail_summary: null, 
                                 detail_sources: null,
-                                searchDate: targetDateString // 캐시 유효성 검사를 위해 추가
+                                searchDate: targetDateString
                             };
                         }
                         return null; 
@@ -302,12 +297,9 @@
             }
         }
 
-
         // -------------------- Gemini API 호출 함수 (상세 요약) --------------------
         async function fetchSummaryWithGemini(newsTitle) {
-            if (!apiKey) throw new Error("API 인증 오류: API 키가 설정되지 않았습니다. 키가 설정되어 있어야 합니다.");
-
-            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            if (!apiKeyAvailable) throw new Error("API 인증 오류: Netlify 환경변수에 GEMINI_API_KEY가 설정되지 않았습니다.");
 
             const systemPrompt = "당신은 전문 기자이자 게임 산업 분석가입니다. 제공된 뉴스 제목을 기반으로 구글 검색을 통해 신뢰할 수 있는 정보를 찾고, 해당 뉴스 내용을 분석적이고 포괄적인 단락으로 한국어로 요약하여 제공하세요. 제목, 인사말, 출처는 제외하고 요약 본문만 작성하며, 요약은 최소 3~5문장 이상으로 상세하게 작성해야 합니다.";
 
@@ -321,7 +313,7 @@
                 },
             };
 
-            const result = await fetchWithRetry(API_URL, payload);
+            const result = await fetchWithRetry(payload);
             const candidate = result.candidates?.[0];
 
             if (candidate && candidate.content?.parts?.[0]?.text) {
@@ -346,14 +338,11 @@
         
         // -------------------- 상세 요약 순차 처리 함수 (Rate Limit 회피) --------------------
         async function prefetchAllSummaries(newsFeed) {
-            // Rate Limit 회피를 위해 순차 처리함을 알림
             showToast(`총 ${newsFeed.length}개 기사의 상세 요약을 Gemini로 미리 진행합니다. (처리율 제한으로 인해 약 1.5초당 1개씩 순차 진행됩니다.)`, false);
             
             const updatedFeed = [];
-            // API 호출 간에 딜레이 추가 (Rate Limit 회피)
             const delayMs = 1500; 
 
-            // Promise.all 대신 for...of 루프를 사용하여 순차적으로 API 호출
             for (const [index, item] of newsFeed.entries()) {
                 try {
                     const result = await fetchSummaryWithGemini(item.title);
@@ -361,10 +350,15 @@
                     item.detail_sources = result.sources;
                     updatedFeed.push(item);
                     
-                    // 진행 상황 업데이트 
-                    document.getElementById('header-subtitle').textContent = `${index + 1}/${newsFeed.length}개 기사 요약 완료. 캐시 저장 중...`;
+                    // 진행률 표시
+                    const progress = Math.round(((index + 1) / newsFeed.length) * 100);
+                    document.getElementById('header-subtitle').innerHTML = `
+                        <div class="w-full bg-gray-700 rounded-full h-2.5 mb-2">
+                            <div class="bg-indigo-600 h-2.5 rounded-full progress-bar" style="width: ${progress}%"></div>
+                        </div>
+                        <span>${index + 1}/${newsFeed.length}개 기사 요약 완료 (${progress}%)</span>
+                    `;
 
-                    // 마지막 항목이 아니면 다음 호출 전에 딜레이
                     if (index < newsFeed.length - 1) {
                         await new Promise(resolve => setTimeout(resolve, delayMs));
                     }
@@ -375,7 +369,6 @@
                     item.detail_sources = [];
                     updatedFeed.push(item);
                     
-                    // 오류 발생 시에도 Rate Limit 방지를 위해 딜레이
                     if (index < newsFeed.length - 1) {
                         await new Promise(resolve => setTimeout(resolve, delayMs));
                     }
@@ -385,36 +378,29 @@
             return updatedFeed;
         }
 
-        // -------------------- UI/UX 및 유틸리티 함수 --------------------
-        
-        function updateKeyStatus() {
-            if (apiKey) {
-                const visibleKey = apiKey.substring(0, 4) + '...' + apiKey.substring(apiKey.length - 4);
-                keyStatus.innerHTML = `<span class="text-green-400">✅ API 키가 설정되었습니다: ${visibleKey}</span>`;
-                apiKeyInput.value = apiKey; 
-                apiKeySection.classList.remove('border-red-500/50');
-                apiKeySection.classList.add('border-green-500/50');
-            } else {
-                keyStatus.innerHTML = `<span class="text-red-400">❌ API 키가 설정되지 않았습니다. 키를 입력하고 저장해 주세요.</span>`;
-                apiKeyInput.value = '';
-                apiKeySection.classList.add('border-red-500/50');
-                apiKeySection.classList.remove('border-green-500/50');
-            }
+        // 캐시 저장 함수 (시간 정보 포함)
+        function saveNewsCache(feed) {
+            localStorage.setItem(NEWS_FEED_STORAGE_KEY, JSON.stringify(feed));
+            localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
         }
 
-        function handleSaveKey() {
-            const newKey = apiKeyInput.value.trim();
-            if (newKey) {
-                localStorage.setItem(API_KEY_STORAGE_KEY, newKey);
-                apiKey = newKey;
-                updateKeyStatus();
+        // 캐시 유효성 검사 (24시간)
+        function isCacheValid() {
+            const cachedFeed = localStorage.getItem(NEWS_FEED_STORAGE_KEY);
+            const cacheTime = localStorage.getItem(CACHE_TIME_KEY);
+            
+            if (!cachedFeed || !cacheTime) return false;
+            
+            try {
+                const cachedData = JSON.parse(cachedFeed);
+                const now = Date.now();
+                const oneDay = 24 * 60 * 60 * 1000;
                 
-                apiKeySection.classList.add('hidden'); 
-
-                showToast("API 키가 저장되었습니다. 뉴스를 로드합니다.");
-                showFeedPage(true); // 키 저장 후 강제 새로 로드
-            } else {
-                showToast("API 키를 입력해 주세요.", true);
+                return cachedData.length > 0 && 
+                       cachedData[0].searchDate === targetDateString && 
+                       (now - parseInt(cacheTime)) < oneDay;
+            } catch (e) {
+                return false;
             }
         }
 
@@ -428,66 +414,49 @@
             document.getElementById('news-date-info').textContent = `(${newsDateText} 기준 주요 동향)`;
             document.getElementById('header-subtitle').textContent = '신뢰할 수 있는 매체에서 수집한 최소 15개, 최대 30개의 기사입니다.';
             
-            // 푸터 날짜 정보 업데이트
             document.getElementById('footer-date-info').textContent = targetDateString;
             
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
-            if (!apiKey) {
+            if (!apiKeyAvailable) {
                 newsGrid.innerHTML = `
                     <div class="col-span-full text-center py-20 text-red-400">
                         <p class="text-xl font-bold">API 키 미설정</p>
-                        <p class="mt-2 text-gray-400">상단의 입력란에 Gemini API 키를 입력하고 <span class="text-indigo-400 font-semibold">'키 저장 및 뉴스 로드'</span> 버튼을 눌러주세요.</p>
+                        <p class="mt-2 text-gray-400">Netlify 환경변수에 GEMINI_API_KEY가 설정되지 않았습니다.</p>
                     </div>
                 `;
                 apiKeySection.classList.remove('hidden'); 
-                refreshContainer.classList.add('hidden');
                 return;
             } else {
                 apiKeySection.classList.add('hidden'); 
             }
 
-            // 1. 캐시 로드 시도
-            const cachedFeed = localStorage.getItem(NEWS_FEED_STORAGE_KEY);
+            // 캐시 유효성 검사
+            let isCacheValidResult = isCacheValid();
             
-            // 캐시 유효성 검사: 날짜와 데이터가 모두 일치해야 유효
-            let isCacheValid = false;
-            if (cachedFeed) {
+            if (isCacheValidResult && !forceRefresh) {
                 try {
-                    const cachedData = JSON.parse(cachedFeed);
-                    // 캐시 데이터의 첫 번째 요소에서 저장된 날짜 정보 확인
-                    if (cachedData.length > 0 && cachedData[0].searchDate === targetDateString) {
-                         currentNewsFeed = cachedData;
-                         isCacheValid = true;
+                    const cachedData = JSON.parse(localStorage.getItem(NEWS_FEED_STORAGE_KEY));
+                    currentNewsFeed = cachedData;
+                    
+                    const hasPrefetchedDetails = currentNewsFeed.some(item => item.detail_summary && item.detail_summary.length > 10);
+                    
+                    if (hasPrefetchedDetails) {
+                        document.getElementById('header-subtitle').textContent = `캐시에서 ${currentNewsFeed.length}개 뉴스를 불러왔습니다. (상세 요약 포함)`;
+                    } else {
+                        document.getElementById('header-subtitle').textContent = `캐시에서 ${currentNewsFeed.length}개 뉴스를 불러왔습니다. 상세 요약을 로드합니다.`;
+                        currentNewsFeed = await prefetchAllSummaries(currentNewsFeed);
+                        saveNewsCache(currentNewsFeed);
                     }
+
+                    renderNews('all');
+                    return;
                 } catch (e) {
-                    console.warn("Cached data corrupted.");
+                    console.warn("Cached data corrupted, will fetch new data.");
                 }
             }
 
-
-            if (isCacheValid && !forceRefresh) {
-                // 캐시된 데이터에 detail_summary 필드가 있는지 확인 (사전 요약 데이터 존재 유무)
-                const hasPrefetchedDetails = currentNewsFeed.some(item => item.detail_summary && item.detail_summary.length > 10);
-                
-                if (hasPrefetchedDetails) {
-                    cacheInfo.textContent = `현재 ${newsDateText}자의 ${currentNewsFeed.length}개 뉴스를 캐시에서 불러왔으며, 상세 요약도 저장되어 있습니다.`;
-                } else {
-                    cacheInfo.textContent = `현재 ${newsDateText}자의 ${currentNewsFeed.length}개 뉴스를 캐시에서 불러왔습니다. 상세 요약이 없어 지금 로드합니다.`;
-                    // 상세 요약 데이터가 없으면 새로 로드하고 캐시를 업데이트
-                    currentNewsFeed = await prefetchAllSummaries(currentNewsFeed);
-                    localStorage.setItem(NEWS_FEED_STORAGE_KEY, JSON.stringify(currentNewsFeed));
-                    cacheInfo.textContent = `현재 ${newsDateText}자의 ${currentNewsFeed.length}개 뉴스를 캐시에서 불러왔으며, 상세 요약도 완료되었습니다.`;
-                }
-
-                refreshContainer.classList.remove('hidden');
-                renderNews('all');
-                return; // 캐시 로드 성공 시 바로 종료
-            }
-
-
-            // 2. 로딩 상태 표시 및 스크랩 + 사전 요약 (캐시 없음 또는 강제 새로 고침 시)
-            refreshContainer.classList.add('hidden');
+            // 로딩 상태 표시
             newsGrid.innerHTML = `
                 <div class="col-span-full text-center py-20">
                     <div class="animate-spin inline-block w-10 h-10 border-4 border-t-4 border-indigo-500 border-opacity-50 rounded-full"></div>
@@ -497,41 +466,36 @@
             `;
             
             try {
-                // 1단계: 뉴스 헤드라인 스크랩
                 let fetchedFeed = await fetchNewsHeadlinesForDate(targetDateString);
                 
-                // 2단계: 상세 요약 일괄 진행 (순차 처리)
                 document.getElementById('header-subtitle').textContent = `뉴스 목록 스크랩 완료. 이제 기사 상세 요약을 순차적으로 미리 진행합니다.`;
                 newsGrid.innerHTML = `
                     <div class="col-span-full text-center py-20">
                         <div class="animate-pulse inline-block w-10 h-10 bg-indigo-500 rounded-full"></div>
                         <p class="text-gray-400 mt-5 text-lg font-medium">총 ${fetchedFeed.length}개 기사 상세 요약 중...</p>
-                        <p class="text-gray-500 mt-2 text-sm">소요 시간: API 요청 제한으로 인해 약 ${Math.ceil(fetchedFeed.length * 1.5 / 60)}분 이상 소요될 수 있습니다. (2단계: AI 분석 및 사전 캐시 작업)</p>
+                        <p class="text-gray-500 mt-2 text-sm">소요 시간: API 요청 제한으로 인해 약 ${Math.ceil(fetchedFeed.length * 1.5 / 60)}분 이상 소요될 수 있습니다.</p>
                     </div>
                 `;
 
                 currentNewsFeed = await prefetchAllSummaries(fetchedFeed);
 
-                // 3단계: 캐시 저장
-                localStorage.setItem(NEWS_FEED_STORAGE_KEY, JSON.stringify(currentNewsFeed));
+                saveNewsCache(currentNewsFeed);
                 
-                cacheInfo.textContent = `성공적으로 ${currentNewsFeed.length}개 뉴스를 스크랩 및 요약하여 캐시에 저장했습니다.`;
-                refreshContainer.classList.remove('hidden');
+                document.getElementById('header-subtitle').textContent = `성공적으로 ${currentNewsFeed.length}개 뉴스를 스크랩 및 요약하여 캐시에 저장했습니다.`;
                 
                 renderNews('all');
                 showToast("뉴스 스크랩 및 상세 요약이 완료되었습니다!", false);
             } catch (error) {
-                // ... 오류 처리
                 let errorMessage = `Gemini가 ${newsDateText}자 뉴스를 가져오는 데 실패했습니다.`;
                 let detailedError = error.message;
 
                 if (error.message.includes('API 인증 오류')) {
-                    errorMessage = `<p class="text-xl font-bold mb-2">API 인증 실패</p><p class="text-gray-400">API 키에 문제가 있거나 유효하지 않습니다. <span class="font-semibold text-white">상단의 입력 섹션이 다시 나타납니다.</span> 키를 확인하고 다시 저장해 주세요.</p>`;
+                    errorMessage = `<p class="text-xl font-bold mb-2">API 인증 실패</p><p class="text-gray-400">Netlify 환경변수에 GEMINI_API_KEY가 설정되지 않았습니다.</p>`;
                     apiKeySection.classList.remove('hidden'); 
                 } else if (error.message.includes('API 호출 실패 (400')) {
                     errorMessage = `<p class="text-xl font-bold mb-2">API 호출 실패 (400 Bad Request)</p><p class="text-gray-400">요청 구문에 오류가 있습니다. 서버에 일시적인 문제가 있을 수 있습니다.</p>`;
                 } else {
-                    errorMessage = `<p class="text-xl font-bold mb-2">뉴스 수집/요약 실패</p> <p class="text-gray-400">Gemini가 ${newsDateText}자 뉴스를 가져오는 데 실패했습니다. <br/>잠시 후 <span class="text-red-300">새 뉴스 스크랩</span> 버튼을 눌러 다시 시도해 주세요.</p>`;
+                    errorMessage = `<p class="text-xl font-bold mb-2">뉴스 수집/요약 실패</p> <p class="text-gray-400">Gemini가 ${newsDateText}자 뉴스를 가져오는 데 실패했습니다. <br/>잠시 후 다시 시도해 주세요.</p>`;
                 }
 
                 newsGrid.innerHTML = `
@@ -540,7 +504,6 @@
                         <p class="mt-4 text-sm text-red-500">상세 오류: ${detailedError}</p>
                     </div>
                 `;
-                refreshContainer.classList.remove('hidden');
             }
         }
         
@@ -597,7 +560,6 @@
                 card.onclick = () => showDetailPage(item); 
                 card.className = 'news-card rounded-xl shadow-xl flex flex-col justify-between p-6';
                 
-                // 요약 준비 상태 아이콘 (미리 로드된 요약이 있는지 표시)
                 const isReady = item.detail_summary && item.detail_summary.length > 10 && !item.detail_summary.includes('오류가 발생했습니다');
                 const readyIcon = isReady 
                     ? `<svg class="w-5 h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>`
@@ -651,30 +613,25 @@
             document.getElementById('detail-source-link').href = item.link && item.link.startsWith('http') ? item.link : '#';
             document.getElementById('detail-source-link').classList.toggle('opacity-50', !item.link || !item.link.startsWith('http'));
 
-            // 미리 로드된 데이터가 있는지 확인
             let summaryText = item.detail_summary;
             let sources = item.detail_sources || [];
 
             if (!summaryText || summaryText.includes('오류가 발생했습니다')) {
-                // 미리 로드된 데이터가 없거나 오류 메시지가 포함된 경우, 즉시 Gemini API 호출
                 detailContainer.innerHTML = `
                     <div class="text-center py-10">
                         <div class="animate-spin inline-block w-8 h-8 border-4 border-t-4 border-indigo-500 border-opacity-50 rounded-full"></div>
                         <p class="text-gray-400 mt-3">Gemini가 Google 검색을 통해 상세 내용을 분석 및 요약 중입니다... (네트워크 요청 발생)</p>
                     </div>`;
                 try {
-                    // 순차 처리 로직을 적용하여 요청
                     const result = await fetchSummaryWithGemini(item.title);
                     summaryText = result.text;
                     sources = result.sources;
                     
-                    // 현재 아이템에 결과 반영 (세부 정보 업데이트)
                     const index = currentNewsFeed.findIndex(n => n.title === item.title);
                     if (index !== -1) {
                          currentNewsFeed[index].detail_summary = summaryText;
                          currentNewsFeed[index].detail_sources = sources;
-                         // 로컬 스토리지에 업데이트된 내용 저장 (다음 방문 시 로드되도록)
-                         localStorage.setItem(NEWS_FEED_STORAGE_KEY, JSON.stringify(currentNewsFeed));
+                         saveNewsCache(currentNewsFeed);
                     }
                     
                     renderDetailContent(summaryText, sources, detailContainer);
@@ -683,7 +640,6 @@
                     console.error("Detail Fetch Error:", error);
                 }
             } else {
-                // 미리 로드된 데이터가 있으면 즉시 렌더링
                 renderDetailContent(summaryText, sources, detailContainer);
             }
         }
@@ -710,14 +666,6 @@
         }
 
         // -------------------- 이벤트 리스너 설정 --------------------
-
-        saveKeyBtn.addEventListener('click', handleSaveKey);
-        
-        refreshNewsBtn.addEventListener('click', () => {
-            localStorage.removeItem(NEWS_FEED_STORAGE_KEY); // 캐시 삭제
-            showToast("이전 뉴스를 삭제하고, 새 뉴스를 스크랩 및 요약합니다.", false);
-            showFeedPage(true); // 강제 새로 고침 요청
-        });
         
         filterButtons.forEach(button => {
             button.addEventListener('click', () => {
@@ -732,24 +680,25 @@
             });
         });
 
-        // --- 초기화: 키/캐시 존재 여부에 따라 UI 및 로직 분기 ---
-        document.addEventListener('DOMContentLoaded', () => {
-            updateKeyStatus();
-            
+        // --- 초기화: API 키 상태 확인 후 자동 로드 ---
+        document.addEventListener('DOMContentLoaded', async () => {
             const initialButton = document.querySelector('[data-filter="all"]');
             if (initialButton) {
                 initialButton.classList.remove('bg-gray-700', 'text-gray-300');
                 initialButton.classList.add('bg-indigo-600', 'text-white');
             }
 
-            if (apiKey) {
-                showFeedPage(); 
+            // API 키 상태 확인
+            const hasApiKey = await checkApiKeyStatus();
+            
+            if (hasApiKey) {
+                // API 키가 있으면 자동으로 뉴스 로드
+                showFeedPage();
             } else {
-                apiKeySection.classList.remove('hidden'); 
                 newsGrid.innerHTML = `
                     <div class="col-span-full text-center py-20 text-gray-400">
                         <p class="text-xl font-bold">서비스 시작</p>
-                        <p class="mt-2">상단에 Gemini API 키를 한 번만 입력하고 저장하면 이후부터는 자동으로 뉴스를 불러와 분석합니다.</p>
+                        <p class="mt-2">Netlify 환경변수에 GEMINI_API_KEY가 설정되면 자동으로 뉴스를 불러와 분석합니다.</p>
                     </div>
                 `;
             }
